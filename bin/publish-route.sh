@@ -16,7 +16,8 @@
 set -euo pipefail
 
 DOMAIN="jimmyhoughjr.net"
-TUNNEL_ID="66a2087d-afe4-4e70-9e74-05da0476cea8"
+# Tunnel is discovered from the account (healthy + remote-managed), not
+# hardcoded — an old tunnel ID from shell history burned us once.
 
 if [[ $# -ne 1 ]]; then
   echo "usage: $(basename "$0") <subdomain>" >&2
@@ -29,11 +30,11 @@ if [[ -z "$TOKEN" ]]; then
   exit 1
 fi
 
-CF_API_TOKEN="$TOKEN" SUB="$SUB" DOMAIN="$DOMAIN" TUNNEL_ID="$TUNNEL_ID" python3 - <<'EOF'
+CF_API_TOKEN="$TOKEN" SUB="$SUB" DOMAIN="$DOMAIN" python3 - <<'EOF'
 import json, os, sys, urllib.request
 
 token = os.environ["CF_API_TOKEN"]
-sub, domain, tunnel = os.environ["SUB"], os.environ["DOMAIN"], os.environ["TUNNEL_ID"]
+sub, domain = os.environ["SUB"], os.environ["DOMAIN"]
 fqdn = f"{sub}.{domain}"
 API = "https://api.cloudflare.com/client/v4"
 
@@ -56,17 +57,35 @@ if not zones.get("result"):
 zone = zones["result"][0]
 zone_id, account_id = zone["id"], zone["account"]["id"]
 
-# 1. DNS record (tolerate "already exists")
-dns = call("POST", f"/zones/{zone_id}/dns_records", {
-    "type": "CNAME", "name": sub, "content": f"{tunnel}.cfargotunnel.com",
-    "proxied": True, "comment": "publish-route.sh",
-})
-if dns.get("success"):
-    print(f"dns: created {fqdn} -> {tunnel}.cfargotunnel.com (proxied)")
-elif any(e.get("code") == 81057 for e in dns.get("errors", [])):
-    print(f"dns: {fqdn} already exists, leaving it")
+# 0. Find THE tunnel: healthy, remote-managed. Refuse to guess if ambiguous.
+tl = call("GET", f"/accounts/{account_id}/cfd_tunnel?is_deleted=false")
+candidates = [t for t in (tl.get("result") or [])
+              if t.get("remote_config") and t.get("status") == "healthy"]
+if len(candidates) != 1:
+    names = [(t["id"], t["name"], t["status"]) for t in (tl.get("result") or [])]
+    sys.exit(f"error: expected exactly one healthy remote-managed tunnel, found {len(candidates)}: {names}")
+tunnel = candidates[0]["id"]
+print(f"tunnel: {candidates[0]['name']} ({tunnel})")
+target = f"{tunnel}.cfargotunnel.com"
+
+# 1. DNS record: create, or repair if it points at the wrong tunnel
+existing = call("GET", f"/zones/{zone_id}/dns_records?type=CNAME&name={fqdn}")
+rec = (existing.get("result") or [None])[0]
+if rec is None:
+    dns = call("POST", f"/zones/{zone_id}/dns_records", {
+        "type": "CNAME", "name": sub, "content": target,
+        "proxied": True, "comment": "publish-route.sh",
+    })
+    if not dns.get("success"):
+        sys.exit(f"error creating dns record: {dns.get('errors')}")
+    print(f"dns: created {fqdn} -> {target} (proxied)")
+elif rec["content"] != target:
+    fix = call("PATCH", f"/zones/{zone_id}/dns_records/{rec['id']}", {"content": target})
+    if not fix.get("success"):
+        sys.exit(f"error repairing dns record: {fix.get('errors')}")
+    print(f"dns: repaired {fqdn} ({rec['content']} -> {target})")
 else:
-    sys.exit(f"error creating dns record: {dns.get('errors')}")
+    print(f"dns: {fqdn} already correct")
 
 # 2. Tunnel ingress rule (fetch full config, insert before catch-all, put back)
 conf = call("GET", f"/accounts/{account_id}/cfd_tunnel/{tunnel}/configurations")
