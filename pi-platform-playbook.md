@@ -13,6 +13,15 @@ and `dokku@192.168.0.103` accepts your key.
 
 ## 1. New app, the six steps
 
+**One command does all of this** (including the Cloudflare route):
+
+    ~/repos/docs/bin/new-app.sh <name> [--static|--node|--swift]
+
+It creates the Dokku app and domain, scaffolds a repo from a template
+(static nginx / zero-dep Node / Hummingbird 2 Swift), makes the first
+deploy, publishes the route via the Cloudflare API, and verifies LAN +
+public. The manual steps below remain as the reference for what it does.
+
 ```sh
 ssh dokku@192.168.0.103 apps:create <name>
 ssh dokku@192.168.0.103 domains:set <name> <name>.jimmyhoughjr.net
@@ -134,6 +143,12 @@ cd ~/status-site && git add -A && git commit && git push dokku main
 Section kinds: `stats`, `banner`, `barchart`, `pie`, `table`, `cards`
 (items use `q` + `pill: {text, tone}`), `split` (uses `columns`).
 
+**Canonical update flow:** edit any `board.json`, then run
+`~/status-site/push-status.sh "message"` — it regenerates the History
+board (every past status push, from git), refreshes the Claude usage
+ledger on the docs site, commits, and deploys. The older
+`update-status.sh` (raw-HTML era) is legacy; don't use it for boards.
+
 ## 8. Operational gotchas (all learned the hard way)
 
 - **Trailing slashes in links.** nginx 301s `/blog` → `http://…/blog/`
@@ -152,6 +167,18 @@ Section kinds: `stats`, `banner`, `barchart`, `pie`, `table`, `cards`
   the dashboard create the DNS record and ingress in one step — no pi
   shell needed, which matters because only `dokku@` has key auth.
 
+## 8b. Secrets inventory
+
+| Secret | Lives at | Used by | Rotate by |
+|---|---|---|---|
+| Cloudflare API token | `~/.cf_api_token` (600) | `publish-route.sh` | dash.cloudflare.com → API Tokens |
+| EIA API key | `~/.eia_api_key` (600) + `dokku config watts EIA_API_KEY` | rates refresh (local + pi cron) | eia.gov/opendata, then update both |
+| GitHub build token | `dokku docker-options blog` build-arg | portfolio build-time API calls | github.com/settings/tokens, re-add docker-option |
+| vault SESSION_SECRET | `dokku config vault` | session cookie HMAC | `config:set` new random hex (logs everyone out) |
+| vault OAuth creds (pending) | `dokku config vault` | Apple/Google sign-in | provider consoles |
+
+Never commit any of these; `rates.json` and other derived data are public.
+
 ## 9. Current fleet (2026-07-07)
 
 | App | What | Repo |
@@ -162,3 +189,4 @@ Section kinds: `stats`, `banner`, `barchart`, `pie`, `table`, `cards`
 | vault | sign-in + user storage (Swift/HB2; Node revert in `~/repos/vault`) | `~/repos/vault-hb` |
 | head2head | implementation-shootout reports + community proposals | `~/head2head-site` |
 | docs | this playbook and friends, rendered from markdown | `~/docs-site` (content: `~/repos/docs`) |
+| hello | living example created by `new-app.sh` | `~/hello-site` |
