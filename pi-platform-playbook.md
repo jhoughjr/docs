@@ -1,8 +1,10 @@
-# The pi platform playbook
+# Roost — the platform playbook
 
-From nothing → a new app live at `<name>.jimmyhoughjr.net`, with data,
-crons, accounts, and a status board. Written 2026-07-07 after building
-watts, vault, and head2head this way.
+**Roost** is the self-hosted platform this all runs on: one small ARM
+box, Dokku, a Cloudflare tunnel, and a toolbelt of scripts. From nothing
+→ a new app live at `<name>.jimmyhoughjr.net`, with data, crons,
+accounts, and a status board. Written 2026-07-07 after building watts,
+vault, and head2head this way.
 
 **Starting from nothing?** Read [getting-started.md](#getting-started.md)
 first — prerequisites, installs on host and workstation, tunnel creation,
@@ -181,7 +183,7 @@ ledger on the docs site, commits, and deploys. The older
 
 Never commit any of these; `rates.json` and other derived data are public.
 
-## 9. Current fleet (2026-07-07)
+## 9. The roost (current fleet)
 
 | App | What | Repo |
 |---|---|---|

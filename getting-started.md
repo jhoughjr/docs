@@ -1,7 +1,9 @@
-# Getting started — prerequisites to first deploy
+# Roost — getting started
 
-The [pi platform playbook](#pi-platform-playbook.md) assumes a working
-stack. This guide gets you *to* that stack from nothing: what to buy,
+Prerequisites to first deploy.
+
+**Roost** is a self-hosted app platform on one small box. The
+[playbook](#pi-platform-playbook.md) assumes a working stack. This guide gets you *to* that stack from nothing: what to buy,
 what to install, what accounts you need, and the first live app.
 
 What you're building:
