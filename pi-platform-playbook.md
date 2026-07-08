@@ -22,9 +22,19 @@ git remote add dokku dokku@192.168.0.103:<name>
 git push dokku main
 ```
 
-Then **one manual step in Cloudflare** (dashboard → Zero Trust → Tunnels →
-published application routes): subdomain `<name>`, domain
-`jimmyhoughjr.net`, service **HTTP → `localhost:80`**.
+Then publish the route — **no dashboard needed**:
+
+```sh
+~/repos/docs/bin/publish-route.sh <name>
+```
+
+That creates the proxied CNAME and the tunnel ingress rule via the
+Cloudflare API, idempotently. One-time setup: an API token from
+dash.cloudflare.com/profile/api-tokens with **Zone / DNS / Edit** (zone
+jimmyhoughjr.net) and **Account / Cloudflare Tunnel / Edit**, stored in
+`~/.cf_api_token` (chmod 600). The dashboard route (Zero Trust → Tunnels
+→ published application routes: subdomain, HTTP → `localhost:80`)
+remains the manual fallback.
 
 > The service URL is `localhost:80` for **every** app, always. Port 80 is
 > Dokku's nginx, not any app; nginx routes by the `Host` header. Apps
@@ -151,3 +161,4 @@ Section kinds: `stats`, `banner`, `barchart`, `pie`, `table`, `cards`
 | watts | electric cost calculator, EIA rates cron | `~/watts-site` |
 | vault | sign-in + user storage (Swift/HB2; Node revert in `~/repos/vault`) | `~/repos/vault-hb` |
 | head2head | implementation-shootout reports + community proposals | `~/head2head-site` |
+| docs | this playbook and friends, rendered from markdown | `~/docs-site` (content: `~/repos/docs`) |
