@@ -4,10 +4,12 @@ From nothing → a new app live at `<name>.jimmyhoughjr.net`, with data,
 crons, accounts, and a status board. Written 2026-07-07 after building
 watts, vault, and head2head this way.
 
-**Machine bootstrap** (Dokku + Cloudflare tunnel from bare metal) is
-already covered by [statusgen/SETUP.md](../statusgen/SETUP.md). This
-playbook starts where that ends: the box runs Dokku, the tunnel exists,
-and `dokku@192.168.0.103` accepts your key.
+**Starting from nothing?** Read [getting-started.md](#getting-started.md)
+first — prerequisites, installs on host and workstation, tunnel creation,
+first deploy. This playbook starts where that ends: the box runs Dokku,
+the tunnel exists, and `dokku@192.168.0.103` accepts your key.
+(statusgen's [SETUP.md](https://github.com/jhoughjr/statusgen/blob/main/SETUP.md)
+covers the locally-managed-tunnel variant of the same bootstrap.)
 
 ---
 
