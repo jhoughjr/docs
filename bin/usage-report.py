@@ -109,7 +109,8 @@ def main():
 
     generated = datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z")
     render(ledger, day, generated)
-    stamp_board(generated)
+    entry = ledger["days"][day.isoformat()]
+    stamp_board(f"{generated} · ${entry['cost']:,.0f} today ({entry['calls']} calls)")
     print(f"{day}: {day_total:,.2f} USD API-equivalent "
           f"({ledger['days'][day.isoformat()]['calls']} calls)")
     publish(day)
