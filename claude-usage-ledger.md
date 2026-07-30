@@ -1,6 +1,6 @@
 # Claude usage ledger — what the plan saves
 
-*Generated 2026-07-29 20:08 CDT — refreshed on every status push and nightly at 23:45.*
+*Generated 2026-07-29 20:13 CDT — refreshed on every status push and nightly at 23:45.*
 
 Daily API-equivalent value of all Claude Code usage on this machine,
 from local transcripts, priced at each model's true API rate
