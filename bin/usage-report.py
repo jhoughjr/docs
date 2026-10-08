@@ -195,7 +195,11 @@ def publish(day):
     if run(["./sync-docs.sh"], SITE):
         run(["git", "add", "-A"], SITE)
         run(["git", "commit", "-m", f"sync: usage ledger {day}"], SITE)
-        if not run(["git", "push", "dokku", "main"], SITE):
+        # A page pushed to the site from another session makes the push a non-fast-forward, and on 2026-10-08 that had
+        # held the ledger off the site since 2026-09-11. The site's copy is merged in first, so the push is a fast-forward.
+        if not run(["git", "pull", "--no-rebase", "--no-edit", "dokku", "main"], SITE):
+            print("note: the site's copy did not merge — the ledger stays local until a person merges it")
+        elif not run(["git", "push", "dokku", "main"], SITE):
             print("note: dokku push failed — committed locally, next run retries")
 
 if __name__ == "__main__":
